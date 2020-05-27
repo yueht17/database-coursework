@@ -10,7 +10,7 @@ from . import db, login_manager
 class Permission:
     FOLLOW = 0x01
     COMMENT = 0x02
-    WRITE_ARTICLES = 0x04
+    PUBLISH_ACTIVITY = 0x04
     MODERATE_COMMENTS = 0x08
     ADMINISTER = 0x80
 
@@ -28,10 +28,10 @@ class Role(db.Model):
         roles = {
             'User': (Permission.FOLLOW |
                      Permission.COMMENT |
-                     Permission.WRITE_ARTICLES, True),
+                     Permission.PUBLISH_ACTIVITY, True),
             'Moderator': (Permission.FOLLOW |
                           Permission.COMMENT |
-                          Permission.WRITE_ARTICLES |
+                          Permission.PUBLISH_ACTIVITY |
                           Permission.MODERATE_COMMENTS, False),
             'Administrator': (0xff, False)
         }
@@ -62,6 +62,7 @@ class User(UserMixin, db.Model):
     member_since = db.Column(db.DateTime(), default=datetime.utcnow)
     last_seen = db.Column(db.DateTime(), default=datetime.utcnow)
     avatar_hash = db.Column(db.String(32))
+    activities = db.relationship('Activity', backref='publisher', lazy='dynamic')
 
     def __init__(self, **kwargs):
         super(User, self).__init__(**kwargs)
@@ -180,3 +181,24 @@ login_manager.anonymous_user = AnonymousUser
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
+
+class ActivityStatus:
+    RESERVED = 0x01
+    ONGOING = 0x02
+    FINISHED = 0x04
+
+
+class Activity(db.Model):
+    __tablename__ = "activities"
+    id = db.Column(db.Integer, primary_key=True)
+    publisher_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    publish_timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    begin_timestamp = db.Column(db.DateTime, index=True)
+    end_timestamp = db.Column(db.DateTime, index=True)
+    location = db.Column(db.String(64), index=True)
+    name = db.Column(db.String(64), index=True)
+    description = db.Column(db.Text)
+    status = db.Column(db.Integer, default=ActivityStatus.RESERVED)
+    capacity = db.Column(db.Integer)
+    disabled = db.Column(db.Boolean, default=False)
