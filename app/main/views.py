@@ -18,6 +18,15 @@ def index():
         elif form.begin.data.__lt__(datetime.now()):
             flash("begin time should be later than now time")
             return redirect(url_for('.index'))
+        elif form.end.data.__sub__(form.begin.data).days >= 1:
+            flash("this activity is too long")
+            return redirect(url_for('.index'))
+        same_place_activities = Activity.query.filter_by(location=form.location.data).all()
+        for same_place_activity in same_place_activities:
+            if not (same_place_activity.begin_timestamp.__gt__(form.end.data)
+                    or same_place_activity.end_timestamp.__lt__(form.begin.data)):
+                flash("conflicts with previously reserved activity, please change location or time!")
+                return redirect(url_for('.index'))
         activity = Activity(publisher=current_user._get_current_object(),
                             begin_timestamp=form.begin.data,
                             end_timestamp=form.end.data,
