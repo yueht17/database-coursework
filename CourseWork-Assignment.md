@@ -18,24 +18,23 @@ Therefore, activities cannot be overlapped.
 
 ## Tasks
 Design a database for the WeSalon system that allows students to
-- Manage the activities;
-- Update (modify/delete) the status of the activities.
-- Display each status of the activities separately.
+1. Manage the activities;
+2. Update (modify/delete) the status of the activities.
+3. Display each status of the activities separately.
 
-- Apply for an activity;
- (each activity has its own capacity, please note the possible conflicts with previously reserved places or time)
+4. Apply for an activity;(each activity has its own capacity, please note the possible conflicts with previously reserved places or time)
 
-- Participate in an activity; (a student can participate in an activity if there are no
+5. Participate in an activity; (a student can participate in an activity if there are no
 conflicts with other participated activities and the current participation number is
 below the activity capacity)
 
-- Comment on an activity; (a student can only comment on an activity iff he/she
+6. Comment on an activity; (a student can only comment on an activity iff he/she
 has participated in the activity and the activity has been finished)
 
-- Filter the activities. (e.g. sort the reserved activities that will hold English Corner
+7. Filter the activities. (e.g. sort the reserved activities that will hold English Corner
 ascending by the start time and descending by the activity capacities. You can filter
 any type of activities as you like)
 
-- Code a demo programme to implement the system
-- You can use any language for programming, and any kind of GUI
+8. Code a demo programme to implement the system
+9. You can use any language for programming, and any kind of GUI
 is acceptable.
