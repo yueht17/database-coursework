@@ -1,9 +1,10 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, TextAreaField, BooleanField, SelectField,\
-    SubmitField
+from wtforms import StringField, TextAreaField, BooleanField, SelectField, \
+    SubmitField, DateTimeField, IntegerField
 from wtforms.validators import Required, Length, Email, Regexp
 from wtforms import ValidationError
 from ..models import Role, User
+from datetime import datetime
 
 
 class NameForm(FlaskForm):
@@ -47,3 +48,15 @@ class EditProfileAdminForm(FlaskForm):
         if field.data != self.user.username and \
                 User.query.filter_by(username=field.data).first():
             raise ValidationError('Username already in use.')
+
+
+class ActivityForm(FlaskForm):
+    name = StringField('Activity name', validators=[Length(0, 64)])
+    description = TextAreaField('Description')
+    location = StringField('Location', validators=[Length(0, 64)])
+    begin = DateTimeField('BeginTime(format:year/month/day/hour/minute,e.g. now it is '
+                          + datetime.now().__format__("%Y/%D/%H") + ')', format="%Y/%m/%d/%H/%M")
+    end = DateTimeField('EndTime(format:year/month/day/hour/minute,e.g. now it is '
+                        + datetime.now().__format__("%Y/%D/%H") + ')', format="%Y/%m/%d/%H/%M")
+    capacity = IntegerField('Capacity', validators=[Required()])
+    submit = SubmitField('Submit')
