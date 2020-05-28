@@ -202,3 +202,11 @@ class Activity(db.Model):
     status = db.Column(db.Integer, default=ActivityStatus.RESERVED)
     capacity = db.Column(db.Integer)
     disabled = db.Column(db.Boolean, default=False)
+
+    def _get_status(self):
+        status_dict = {
+            0x01: "<font color=\"green\">Reserved</font>",
+            0x02: "<font color=\"red\">Ongoing</font>",
+            0x04: "<font color=\"black\">Finished</font>"
+        }
+        return status_dict[self.status]
