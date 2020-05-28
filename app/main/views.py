@@ -1,4 +1,4 @@
-from flask import render_template, redirect, url_for, abort, flash
+from flask import render_template, redirect, url_for, abort, flash, request, current_app
 from flask_login import login_required, current_user
 from . import main
 from .forms import EditProfileForm, EditProfileAdminForm, ActivityForm
@@ -37,8 +37,12 @@ def index():
         db.session.add(activity)
         flash("Publish success")
         return redirect(url_for('.index'))
-    activities = Activity.query.order_by(Activity.begin_timestamp.desc()).all()
-    return render_template('index.html', form=form, activities=activities)
+    page = request.args.get('page', 1, type=int)
+    pagination = Activity.query.order_by(Activity.publish_timestamp.desc()).paginate(
+        page, per_page=current_app.config['FLASKY_ACTIVITIES_PER_PAGE'],
+        error_out=False)
+    activities = pagination.items
+    return render_template('index.html', form=form, activities=activities, pagination=pagination)
 
 
 @main.route('/user/<username>')
@@ -46,8 +50,12 @@ def user(username):
     user = User.query.filter_by(username=username).first()
     if user is None:
         abort(404)
-    activities = Activity.query.order_by(Activity.begin_timestamp.desc()).all()
-    return render_template('user.html', user=user, activities=activities)
+    page = request.args.get('page', 1, type=int)
+    pagination = user.activities.order_by(Activity.publish_timestamp.desc()).paginate(
+        page, per_page=current_app.config['FLASKY_ACTIVITIES_PER_PAGE'],
+        error_out=False)
+    activities = pagination.items
+    return render_template('user.html', user=user, activities=activities, pagination=pagination)
 
 
 @main.route('/edit-profile', methods=['GET', 'POST'])
