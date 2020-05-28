@@ -232,3 +232,52 @@ class Activity(db.Model):
             0x04: "<font color=\"black\">Finished</font>"
         }
         return status_dict[self.status]
+
+    @staticmethod
+    def generate_fake(count=100):
+        from random import seed, randint, sample
+        from datetime import datetime, timedelta
+        import forgery_py
+
+        seed()
+        user_count = User.query.count()
+        for i in range(count):
+            publisher = User.query.offset(randint(0, user_count - 1)).first()
+            while True:
+                begin_timestamp = datetime.now() + timedelta(days=randint(1, 100)) + timedelta(hours=randint(0, 24))
+                end_timestamp = begin_timestamp + timedelta(hours=randint(1, 10))
+                location = forgery_py.address.city(),
+                if begin_timestamp.__ge__(end_timestamp):
+                    continue
+                elif begin_timestamp.__lt__(datetime.now()):
+                    continue
+                elif end_timestamp.__sub__(begin_timestamp).days >= 1:
+                    continue
+                same_place_activities = Activity.query.filter_by(location=location).all()
+                for same_place_activity in same_place_activities:
+                    if not (same_place_activity.begin_timestamp.__gt__(end_timestamp)
+                            or same_place_activity.end_timestamp.__lt__(begin_timestamp)):
+                        continue
+                break
+
+            def generate_fake_name():
+                dishes_list = ["江西瓦罐汤", "北京烤鸭", "麻辣香锅", "烤冷面", "川菜", "馄饨", "肠粉", "粥", "酸菜鱼",
+                               "过桥米线", "牛肉饭", "炸鸡饭", "手抓饭", "白水煮鸡蛋", "奶茶", "涮羊肉", "炸鸡"]
+                canteen_list = [" 澜园教工餐厅", "南园食堂", "芝兰园自助餐厅", "玉树园",
+                                "清芬园", "丁香园", "听涛园", "观畴园", "紫荆园", "桃李园", "清青快餐厅"]
+                meal = ["早餐", "午餐", "晚餐"]
+                selected_dishes = sample(dishes_list, 2)
+                selected_canteen = sample(canteen_list, 2)
+                selected_meal = sample(meal, 1)
+                return "关于" + selected_canteen[0] + "的" + selected_dishes[0] + "," + selected_canteen[1] + "的" + \
+                       selected_dishes[1] + "那个更适合做" + selected_meal[0] + "的线下研讨会。"
+
+            activity = Activity(publisher=publisher,
+                                begin_timestamp=begin_timestamp,
+                                end_timestamp=end_timestamp,
+                                location=location,
+                                name=generate_fake_name(),
+                                description="到底那个更合适呢？快来讨论呀~",
+                                capacity=randint(10, 100))
+            db.session.add(activity)
+            db.session.commit()
