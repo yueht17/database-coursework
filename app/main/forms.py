@@ -52,7 +52,7 @@ class EditProfileAdminForm(FlaskForm):
 
 class ActivityForm(FlaskForm):
     name = StringField('Activity name', validators=[Length(0, 64)])
-    description = TextAreaField('Description')
+    description = TextAreaField('Description', validators=[Length(0, 64)])
     location = StringField('Location', validators=[Length(0, 64)])
     begin = DateTimeField('BeginTime(format:year/month/day/hour/minute,e.g. now it is '
                           + datetime.now().__format__("%Y/%D/%H") + ')', format="%Y/%m/%d/%H/%M")
