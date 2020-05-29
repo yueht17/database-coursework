@@ -50,6 +50,15 @@
                 {{activity.capacity}}
             </div>
             <div class="activity-footer" style="text-align: right;">
+                {% if current_user == activity.publisher %}
+                <a href="{{ url_for('.edit', id=activity.id) }}">
+                    <span class="label label-primary">Edit</span>
+                </a>
+                {% elif current_user.is_administrator() %}
+                <a href="{{ url_for('.edit', id=activity.id) }}">
+                    <span class="label label-danger">Edit [Admin]</span>
+                </a>
+                {% endif %}
                 <a href="{{url_for('.activity',id=activity.id)}}">
                     <span class="label label-default">
                         Permalink

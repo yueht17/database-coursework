@@ -106,3 +106,43 @@ def edit_profile_admin(id):
 def activity(id):
     activity_arg = Activity.query.get_or_404(id)
     return render_template('activity.html', activities=[activity_arg])
+
+
+@main.route('/edit/<int:id>', methods=['GET', 'POST'])
+@login_required
+def edit(id):
+    activity = Activity.query.get_or_404(id)
+    if current_user != activity.publisher and \
+            not current_user.can(Permission.ADMINISTER):
+        abort(403)
+    form = ActivityForm()
+    if form.validate_on_submit():
+        if form.begin.data.__ge__(form.end.data):
+            flash("begin time should be earlier than end time")
+            return render_template('edit_activity.html', form=form)
+        elif form.begin.data.__lt__(datetime.now()):
+            flash("begin time should be later than now time")
+            return render_template('edit_activity.html', form=form)
+
+        elif form.end.data.__sub__(form.begin.data).days >= 1:
+            flash("this activity is too long")
+            return render_template('edit_activity.html', form=form)
+
+        same_place_activities = Activity.query.filter_by(location=form.location.data).all()
+        for same_place_activity in same_place_activities:
+            if not (same_place_activity.begin_timestamp.__gt__(form.end.data)
+                    or same_place_activity.end_timestamp.__lt__(form.begin.data)):
+                flash("conflicts with previously reserved activity, please change location or time!")
+                return render_template('edit_activity.html', form=form)
+
+        activity = Activity(publisher=current_user._get_current_object(),
+                            begin_timestamp=form.begin.data,
+                            end_timestamp=form.end.data,
+                            location=form.location.data,
+                            name=form.name.data,
+                            description=form.description.data,
+                            capacity=form.capacity.data)
+        db.session.add(activity)
+        flash("Update success")
+        return redirect(url_for(".activity", id=id))
+    return render_template('edit_activity.html', form=form)
