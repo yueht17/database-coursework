@@ -100,3 +100,9 @@ def edit_profile_admin(id):
     form.location.data = user.location
     form.about_me.data = user.about_me
     return render_template('edit_profile.html', form=form, user=user)
+
+
+@main.route('/activity/<int:id>')
+def activity(id):
+    activity_arg = Activity.query.get_or_404(id)
+    return render_template('activity.html', activities=[activity_arg])
