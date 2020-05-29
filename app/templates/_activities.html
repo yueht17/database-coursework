@@ -49,6 +49,13 @@
             <div id="Publish_capacity" class="line" style="padding-left:10px;margin:auto;margin-top:-4px;">
                 {{activity.capacity}}
             </div>
+            <div class="activity-footer" style="text-align: right;">
+                <a href="{{url_for('.activity',id=activity.id)}}">
+                    <span class="label label-default">
+                        Permalink
+                    </span>
+                </a>
+            </div>
         </div>
     </li>
     {% endfor %}
