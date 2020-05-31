@@ -82,6 +82,7 @@ class User(UserMixin, db.Model):
                                 backref=db.backref('followed', lazy='joined'),
                                 lazy='dynamic',
                                 cascade='all, delete-orphan')
+    enrollments = db.relationship('Enrollment', backref='paticipant', lazy='dynamic')
 
     def __init__(self, **kwargs):
         super(User, self).__init__(**kwargs)
@@ -263,9 +264,9 @@ class Activity(db.Model):
     location = db.Column(db.String(64), index=True)
     name = db.Column(db.String(64), index=True)
     description = db.Column(db.Text)
-    # status = db.Column(db.Integer, default=ActivityStatus.RESERVED)
     capacity = db.Column(db.Integer)
     disabled = db.Column(db.Boolean, default=False)
+    enrollments = db.relationship('Enrollment', backref='activity', lazy='dynamic')
 
     def _get_status(self):
         if datetime.now().__lt__(self.begin_timestamp):
@@ -331,3 +332,11 @@ class Activity(db.Model):
                                 capacity=randint(10, 100))
             db.session.add(activity)
             db.session.commit()
+
+
+class Enrollment(db.Model):
+    __tablename__ = 'enrollment'
+    id = db.Column(db.Integer, primary_key=True)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow())
+    activity_id = db.Column(db.Integer, db.ForeignKey('activities.id'))
+    participant_id = db.Column(db.Integer, db.ForeignKey('users.id'))

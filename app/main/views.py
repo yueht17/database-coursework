@@ -3,7 +3,7 @@ from flask_login import login_required, current_user
 from . import main
 from .forms import EditProfileForm, EditProfileAdminForm, ActivityForm
 from .. import db
-from ..models import Role, User, Permission, Activity, ActivityStatus
+from ..models import Role, User, Permission, Activity, ActivityStatus, Enrollment
 from ..decorators import admin_required, permission_required
 from datetime import datetime
 
@@ -239,3 +239,50 @@ def show_followed():
     resp = make_response(redirect(url_for('.index')))
     resp.set_cookie('show_followed', '1', max_age=30 * 24 * 60 * 60)
     return resp
+
+
+@main.route('/participate/<int:id>', methods=['GET', 'POST'])
+@login_required
+def participate(id):
+    activity = Activity.query.get_or_404(id)
+
+    def is_time_conflict():
+        activities_of_participant = Enrollment.query. \
+            filter_by(participant_id=current_user._get_current_object().id).all()
+        for activity_of_participant in activities_of_participant:
+            if activity.end_timestamp.__lt__(activity_of_participant.activity.begin_timestamp) or \
+                    activity.begin_timestamp.__gt__(activity_of_participant.activity.end_timestamp):
+                continue
+            else:
+                return True
+        return False
+
+    if activity._get_status() == ActivityStatus.ONGOING:
+        flash("Pariticipation Failed!because this activity is ongoing.")
+        return redirect(url_for('.activity', id=id))
+
+    elif activity._get_status() == ActivityStatus.FINISHED:
+        flash("Pariticipation Failed!because this activity is finished.")
+        return redirect(url_for('.activity', id=id))
+
+    elif current_user == activity.publisher:
+        flash("Pariticipation Failed!because you are the publisher of this activity.")
+        return redirect(url_for('.activity', id=id))
+
+    elif Enrollment.query.filter_by(activity_id=id).count() >= activity.capacity:
+        flash("Pariticipation Failed!because this activity is full.")
+        return redirect(url_for('.activity', id=id))
+    elif Enrollment.query.filter_by(activity_id=id). \
+            filter_by(participant_id=current_user._get_current_object().id).all().__len__():
+        flash("Pariticipation Failed!because you have already participated it.")
+        return redirect(url_for('.activity', id=id))
+
+    elif is_time_conflict():
+        flash("Pariticipation Failed!because you are not availiable at that time.")
+        return redirect(url_for('.activity', id=id))
+
+    else:
+        enrollment = Enrollment(activity_id=id, participant_id=current_user._get_current_object().id)
+        db.session.add(enrollment)
+        flash("Participate Succeed!")
+        return redirect(url_for('.activity', id=id))
