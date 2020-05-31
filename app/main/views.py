@@ -116,7 +116,14 @@ def edit_profile_admin(id):
 @main.route('/activity/<int:id>')
 def activity(id):
     activity_arg = Activity.query.get_or_404(id)
-    return render_template('activity.html', activities=[activity_arg])
+    page = request.args.get('page', 1, type=int)
+    pagination = Enrollment.query.filter_by(activity_id=id).paginate(
+        page, per_page=current_app.config['FLASKY_PARTICIPANTS_PER_PAGE'],
+        error_out=False)
+    participants = [{'user': item.participant_id, 'timestamp': item.timestamp}
+                    for item in pagination.items]
+    return render_template('activity.html', activities=[activity_arg], pagination=pagination,
+                           participants=participants, User=User, endpoint='.activity', endpoint_id=id)
 
 
 @main.route('/edit/<int:id>', methods=['GET', 'POST'])
