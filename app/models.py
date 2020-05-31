@@ -263,17 +263,25 @@ class Activity(db.Model):
     location = db.Column(db.String(64), index=True)
     name = db.Column(db.String(64), index=True)
     description = db.Column(db.Text)
-    status = db.Column(db.Integer, default=ActivityStatus.RESERVED)
+    # status = db.Column(db.Integer, default=ActivityStatus.RESERVED)
     capacity = db.Column(db.Integer)
     disabled = db.Column(db.Boolean, default=False)
 
     def _get_status(self):
+        if datetime.now().__lt__(self.begin_timestamp):
+            return ActivityStatus.RESERVED
+        elif datetime.now().__lt__(self.end_timestamp):
+            return ActivityStatus.ONGOING
+        else:
+            return ActivityStatus.FINISHED
+
+    def _status2html(self):
         status_dict = {
             0x01: "<font color=\"green\">Reserved</font>",
             0x02: "<font color=\"red\">Ongoing</font>",
             0x04: "<font color=\"black\">Finished</font>"
         }
-        return status_dict[self.status]
+        return status_dict[self._get_status()]
 
     @staticmethod
     def generate_fake(count=100):

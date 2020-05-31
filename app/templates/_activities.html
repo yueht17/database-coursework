@@ -21,7 +21,7 @@
 
             <div class="line-bolder" style="margin-top:-4px;float:left;"><b>Activity status:</b></div>
             <div id="activity_status" class="line" style="padding-left:10px;margin:auto;margin-top:-4px;">
-                {{ activity._get_status() |safe}}
+                {{ activity._status2html() |safe}}
             </div>
 
             <div class="line_bolder" style="margin-top:-4px;float:left;"><b>Publish time:</b></div>
