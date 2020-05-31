@@ -12,6 +12,8 @@ migrate = Migrate(app, db)
 
 def make_shell_context():
     return dict(app=app, db=db, User=User, Role=Role, Permission=Permission, Activity=Activity)
+
+
 manager.add_command("shell", Shell(make_context=make_shell_context))
 manager.add_command('db', MigrateCommand)
 
@@ -23,6 +25,12 @@ def test():
     tests = unittest.TestLoader().discover('tests')
     unittest.TextTestRunner(verbosity=2).run(tests)
 
+
+@manager.command
+def generate_fake():
+    User.generate_fake()
+    Activity.generate_fake()
+    print("[Info]:Generate fake info Done!")
 
 if __name__ == '__main__':
     manager.run()
