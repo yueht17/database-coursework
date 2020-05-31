@@ -45,7 +45,10 @@ def index():
         query = current_user.followed_activities
     else:
         query = Activity.query
-    pagination = query.order_by(Activity.publish_timestamp.desc()).paginate(
+    # pagination = query.order_by(Activity.publish_timestamp.desc()).paginate(
+    #     page, per_page=current_app.config['FLASKY_ACTIVITIES_PER_PAGE'],
+    #     error_out=False)
+    pagination = query.order_by(Activity.begin_timestamp).paginate(
         page, per_page=current_app.config['FLASKY_ACTIVITIES_PER_PAGE'],
         error_out=False)
     activities = pagination.items
