@@ -59,6 +59,11 @@
                     <span class="label label-danger">Edit [Admin]</span>
                 </a>
                 {% endif %}
+                {% if current_user != activity.publisher %}
+                <a href="{{ url_for('.participate', id=activity.id) }}">
+                    <span class="label label-primary">Participate</span>
+                </a>
+                {% endif %}
                 <a href="{{url_for('.activity',id=activity.id)}}">
                     <span class="label label-default">
                         Permalink
