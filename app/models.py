@@ -340,3 +340,44 @@ class Enrollment(db.Model):
     timestamp = db.Column(db.DateTime, default=datetime.utcnow())
     activity_id = db.Column(db.Integer, db.ForeignKey('activities.id'))
     participant_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+
+    @staticmethod
+    def generate_fake(count=1000):
+        from random import seed, randint
+
+        seed()
+        user_count = User.query.count()
+        activity_count = Activity.query.count()
+
+        def is_time_conflict(participant):
+            activities_of_participant = Enrollment.query. \
+                filter_by(participant_id=participant.id).all()
+            for activity_of_participant in activities_of_participant:
+                if activity.end_timestamp.__lt__(activity_of_participant.activity.begin_timestamp) or \
+                        activity.begin_timestamp.__gt__(activity_of_participant.activity.end_timestamp):
+                    continue
+                else:
+                    return True
+            return False
+
+        for i in range(count):
+            while True:
+                participant = User.query.offset(randint(0, user_count - 1)).first()
+                activity = Activity.query.offset(randint(0, activity_count - 1)).first()
+                if activity._get_status() == ActivityStatus.ONGOING:
+                    continue
+                elif activity._get_status() == ActivityStatus.FINISHED:
+                    continue
+                elif participant == activity.publisher:
+                    continue
+                elif Enrollment.query.filter_by(activity_id=activity.id).count() >= activity.capacity:
+                    continue
+                elif Enrollment.query.filter_by(activity_id=activity.id). \
+                        filter_by(participant_id=participant.id).all().__len__():
+                    continue
+                elif is_time_conflict(participant=participant):
+                    continue
+                else:
+                    enrollment = Enrollment(activity_id=activity.id, participant_id=participant.id)
+                    db.session.add(enrollment)
+                    break
