@@ -166,6 +166,23 @@ def edit(id):
     return render_template('edit_activity.html', form=form)
 
 
+@main.route('/delete/<int:id>', methods=['GET', 'POST'])
+@login_required
+def delete(id):
+    activities = Activity.query.filter_by(id=id).all()
+    enrollments = Enrollment.query.filter_by(activity_id=id).all()
+    # TODO
+    # delete commits
+    for activity in activities:
+        db.session.delete(activity)
+        db.session.commit()
+    for enrollment in enrollments:
+        db.session.delete(enrollment)
+        db.session.commit()
+    flash("Activity delete succeed!")
+    return redirect(url_for(".index"))
+
+
 @main.route('/follow/<username>')
 @login_required
 @permission_required(Permission.FOLLOW)
