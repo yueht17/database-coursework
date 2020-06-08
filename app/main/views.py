@@ -1,42 +1,50 @@
 from flask import render_template, redirect, url_for, abort, flash, request, current_app, make_response
 from flask_login import login_required, current_user
 from . import main
-from .forms import EditProfileForm, EditProfileAdminForm, ActivityForm
+from .forms import EditProfileForm, EditProfileAdminForm, ActivityForm, FilterForm, FilterStatus, FilterStartTimeOrder, \
+    FilterCapacityOrder
 from .. import db
-from ..models import Role, User, Permission, Activity, ActivityStatus, Enrollment
+from ..models import Role, User, Permission, Activity, Enrollment
 from ..decorators import admin_required, permission_required
 from datetime import datetime
+
+filter = {'status': FilterStatus.ALL,
+          'start_time_order': FilterStartTimeOrder.DEFAULT,
+          'capacity_order': FilterCapacityOrder.DEFAULT,
+          'location': ''}
 
 
 @main.route('/', methods=['GET', 'POST'])
 def index():
-    form = ActivityForm()
-    if current_user.can(Permission.PUBLISH_ACTIVITY) and form.validate_on_submit():
-        if form.begin.data.__ge__(form.end.data):
+    publish_form = ActivityForm()
+    filter_form = FilterForm()
+    if current_user.can(Permission.PUBLISH_ACTIVITY) and publish_form.validate_on_submit():
+        if publish_form.begin.data.__ge__(publish_form.end.data):
             flash("begin time should be earlier than end time")
             return redirect(url_for('.index'))
-        elif form.begin.data.__lt__(datetime.now()):
+        elif publish_form.begin.data.__lt__(datetime.now()):
             flash("begin time should be later than now time")
             return redirect(url_for('.index'))
-        elif form.end.data.__sub__(form.begin.data).days >= 1:
+        elif publish_form.end.data.__sub__(publish_form.begin.data).days >= 1:
             flash("this activity is too long")
             return redirect(url_for('.index'))
-        same_place_activities = Activity.query.filter_by(location=form.location.data).all()
+        same_place_activities = Activity.query.filter_by(location=publish_form.location.data).all()
         for same_place_activity in same_place_activities:
-            if not (same_place_activity.begin_timestamp.__gt__(form.end.data)
-                    or same_place_activity.end_timestamp.__lt__(form.begin.data)):
+            if not (same_place_activity.begin_timestamp.__gt__(publish_form.end.data)
+                    or same_place_activity.end_timestamp.__lt__(publish_form.begin.data)):
                 flash("conflicts with previously reserved activity, please change location or time!")
                 return redirect(url_for('.index'))
         activity = Activity(publisher=current_user._get_current_object(),
-                            begin_timestamp=form.begin.data,
-                            end_timestamp=form.end.data,
-                            location=form.location.data,
-                            name=form.name.data,
-                            description=form.description.data,
-                            capacity=form.capacity.data)
+                            begin_timestamp=publish_form.begin.data,
+                            end_timestamp=publish_form.end.data,
+                            location=publish_form.location.data,
+                            name=publish_form.name.data,
+                            description=publish_form.description.data,
+                            capacity=publish_form.capacity.data)
         db.session.add(activity)
         flash("Publish success")
         return redirect(url_for('.index'))
+
     page = request.args.get('page', 1, type=int)
     show_followed = False
     if current_user.is_authenticated:
@@ -45,14 +53,66 @@ def index():
         query = current_user.followed_activities
     else:
         query = Activity.query
-    # pagination = query.order_by(Activity.publish_timestamp.desc()).paginate(
-    #     page, per_page=current_app.config['FLASKY_ACTIVITIES_PER_PAGE'],
-    #     error_out=False)
-    pagination = query.order_by(Activity.begin_timestamp).paginate(
+
+    if filter_form.validate_on_submit():
+        filter['status'] = filter_form.data['status']
+        filter['start_time_order'] = filter_form.data['start_time_order']
+        filter['capacity_order'] = filter_form.data['capacity_order']
+        filter['location'] = filter_form.data['location']
+
+    if filter['status'] == FilterStatus.ALL:
+        pass
+    elif filter['status'] == FilterStatus.RESERVED:
+        query = query.filter(Activity.begin_timestamp > datetime.now())
+    elif filter['status'] == FilterStatus.ONGOING:
+        query = query.filter(Activity.end_timestamp >= datetime.now()). \
+            filter(Activity.begin_timestamp <= datetime.now())
+    elif filter['status'] == FilterStatus.FINISHED:
+        query = query.filter(Activity.end_timestamp < datetime.now())
+    else:
+        raise ValueError
+
+    if filter['location'].__len__() == 0:
+        pass
+    else:
+        query = query.filter_by(location=filter['location'])
+
+    if filter['start_time_order'] == FilterStartTimeOrder.DEFAULT:
+        if filter['capacity_order'] == FilterCapacityOrder.DEFAULT:
+            pass
+        elif filter['capacity_order'] == FilterCapacityOrder.ASC:
+            query = query.order_by(Activity.capacity)
+        elif filter['capacity_order'] == FilterCapacityOrder.DES:
+            query = query.order_by(Activity.capacity.desc())
+        else:
+            raise ValueError
+    elif filter['start_time_order'] == FilterStartTimeOrder.ASC:
+        if filter['capacity_order'] == FilterCapacityOrder.DEFAULT:
+            query = query.order_by(Activity.begin_timestamp)
+        elif filter['capacity_order'] == FilterCapacityOrder.ASC:
+            query = query.order_by(Activity.begin_timestamp, Activity.capacity)
+        elif filter['capacity_order'] == FilterCapacityOrder.DES:
+            query = query.order_by(Activity.begin_timestamp, Activity.capacity.desc())
+        else:
+            raise ValueError
+    elif filter['start_time_order'] == FilterStartTimeOrder.DES:
+        if filter['capacity_order'] == FilterCapacityOrder.DEFAULT:
+            query = query.order_by(Activity.begin_timestamp.desc())
+        elif filter['capacity_order'] == FilterCapacityOrder.ASC:
+            query = query.order_by(Activity.begin_timestamp.desc(), Activity.capacity)
+        elif filter['capacity_order'] == FilterCapacityOrder.DES:
+            query = query.order_byActivity.begin_timestamp.desc(), (Activity.capacity.desc())
+        else:
+            raise ValueError
+    else:
+        raise ValueError
+
+    pagination = query.paginate(
         page, per_page=current_app.config['FLASKY_ACTIVITIES_PER_PAGE'],
         error_out=False)
     activities = pagination.items
-    return render_template('index.html', form=form, activities=activities, show_followed=show_followed,
+    return render_template('index.html', publish_form=publish_form, filter_form=filter_form, activities=activities,
+                           show_followed=show_followed,
                            pagination=pagination)
 
 
