@@ -9,7 +9,7 @@
 </div>
 <div>
     {% if current_user.can(Permission.PUBLISH_ACTIVITY) %}
-    {{ wtf.quick_form(form) }}
+    {{ wtf.quick_form(publish_form) }}
     {% endif %}
 </div>
 <div class="activity-tabs">
@@ -23,6 +23,7 @@
         </li>
         {% endif %}
     </ul>
+    {{ wtf.quick_form(filter_form) }}
     {%include '_activities.html'%}
 </div>
 {% if pagination%}
