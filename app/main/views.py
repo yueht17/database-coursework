@@ -1,10 +1,10 @@
 from flask import render_template, redirect, url_for, abort, flash, request, current_app, make_response
 from flask_login import login_required, current_user
 from . import main
-from .forms import EditProfileForm, EditProfileAdminForm, ActivityForm, FilterForm, FilterStatus, FilterStartTimeOrder, \
-    FilterCapacityOrder
+from .forms import EditProfileForm, EditProfileAdminForm, ActivityForm, FilterForm, FilterStatus, \
+    FilterStartTimeOrder, FilterCapacityOrder
 from .. import db
-from ..models import Role, User, Permission, Activity, Enrollment
+from ..models import Role, User, Permission, Activity, Enrollment, ActivityStatus
 from ..decorators import admin_required, permission_required
 from datetime import datetime
 
@@ -33,34 +33,7 @@ filter_capacity_order_to_str = {
 
 @main.route('/', methods=['GET', 'POST'])
 def index():
-    publish_form = ActivityForm()
     filter_form = FilterForm()
-    if current_user.can(Permission.PUBLISH_ACTIVITY) and publish_form.validate_on_submit():
-        if publish_form.begin.data.__ge__(publish_form.end.data):
-            flash("begin time should be earlier than end time")
-            return redirect(url_for('.index'))
-        elif publish_form.begin.data.__lt__(datetime.now()):
-            flash("begin time should be later than now time")
-            return redirect(url_for('.index'))
-        elif publish_form.end.data.__sub__(publish_form.begin.data).days >= 1:
-            flash("this activity is too long")
-            return redirect(url_for('.index'))
-        same_place_activities = Activity.query.filter_by(location=publish_form.location.data).all()
-        for same_place_activity in same_place_activities:
-            if not (same_place_activity.begin_timestamp.__gt__(publish_form.end.data)
-                    or same_place_activity.end_timestamp.__lt__(publish_form.begin.data)):
-                flash("conflicts with previously reserved activity, please change location or time!")
-                return redirect(url_for('.index'))
-        activity = Activity(publisher=current_user._get_current_object(),
-                            begin_timestamp=publish_form.begin.data,
-                            end_timestamp=publish_form.end.data,
-                            location=publish_form.location.data,
-                            name=publish_form.name.data,
-                            description=publish_form.description.data,
-                            capacity=publish_form.capacity.data)
-        db.session.add(activity)
-        flash("Publish success")
-        return redirect(url_for('.index'))
 
     page = request.args.get('page', 1, type=int)
     show_followed = False
@@ -139,7 +112,7 @@ def index():
                         ", capacity order: " + filter_capacity_order_to_str[filter['capacity_order']] + \
                         ", location: " + filter['location'] + "}"
     flash(fliter_prompt)
-    return render_template('index.html', publish_form=publish_form, filter_form=filter_form, activities=activities,
+    return render_template('index.html', filter_form=filter_form, activities=activities,
                            show_followed=show_followed,
                            pagination=pagination)
 
@@ -155,6 +128,40 @@ def user(username):
         error_out=False)
     activities = pagination.items
     return render_template('user.html', user=user, activities=activities, pagination=pagination)
+
+
+@main.route('/publish/<username>', methods=['GET', 'POST'])
+def publish(username):
+    publish_form = ActivityForm()
+    if not current_user.can(Permission.PUBLISH_ACTIVITY):
+        raise ValueError("you have not the permission to publish activity")
+    if publish_form.validate_on_submit():
+        if publish_form.begin.data.__ge__(publish_form.end.data):
+            flash("begin time should be earlier than end time")
+            return redirect(url_for('.publish', username=username))
+        elif publish_form.begin.data.__lt__(datetime.now()):
+            flash("begin time should be later than now time")
+            return redirect(url_for('.publish', username=username))
+        elif publish_form.end.data.__sub__(publish_form.begin.data).days >= 1:
+            flash("this activity is too long")
+            return redirect(url_for('.publish', username=username))
+        same_place_activities = Activity.query.filter_by(location=publish_form.location.data).all()
+        for same_place_activity in same_place_activities:
+            if not (same_place_activity.begin_timestamp.__gt__(publish_form.end.data)
+                    or same_place_activity.end_timestamp.__lt__(publish_form.begin.data)):
+                flash("conflicts with previously reserved activity, please change location or time!")
+                return redirect(url_for('.publish', username=username))
+        activity = Activity(publisher=current_user._get_current_object(),
+                            begin_timestamp=publish_form.begin.data,
+                            end_timestamp=publish_form.end.data,
+                            location=publish_form.location.data,
+                            name=publish_form.name.data,
+                            description=publish_form.description.data,
+                            capacity=publish_form.capacity.data)
+        db.session.add(activity)
+        flash("Publish success")
+        return redirect(url_for('.index'))
+    return render_template('publish.html', publish_form=publish_form, username=username)
 
 
 @main.route('/edit-profile', methods=['GET', 'POST'])
