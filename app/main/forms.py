@@ -1,9 +1,9 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, TextAreaField, BooleanField, SelectField, \
     SubmitField, DateTimeField, IntegerField
-from wtforms.validators import Required, Length, Email, Regexp
+from wtforms.validators import Required, Length, Email, Regexp, Optional
 from wtforms import ValidationError
-from ..models import Role, User
+from ..models import Role, User, ActivityStatus
 from datetime import datetime
 
 
@@ -60,3 +60,42 @@ class ActivityForm(FlaskForm):
                         + datetime.now().__format__("%Y/%D/%H") + ')', format="%Y/%m/%d/%H/%M")
     capacity = IntegerField('Capacity', validators=[Required()])
     submit = SubmitField('Submit')
+
+
+class FilterStatus:
+    ALL = 0x00
+    RESERVED = 0x01
+    ONGOING = 0x02
+    FINISHED = 0x04
+
+
+class FilterStartTimeOrder:
+    DEFAULT = 0x00
+    DES = 0x01
+    ASC = 0x02
+
+
+class FilterCapacityOrder(FilterStartTimeOrder):
+    pass
+
+
+class FilterForm(FlaskForm):
+    # TODO
+    status = SelectField('status：', choices=[
+        (FilterStatus.ALL, 'All'),
+        (FilterStatus.RESERVED, 'Reserved'),
+        (FilterStatus.ONGOING, 'Ongoing'),
+        (FilterStatus.FINISHED, 'Finished'),
+    ], coerce=int)
+    location = StringField('Location(Optional)', validators=[Length(0, 64)])
+    start_time_order = SelectField('start time order',
+                                   choices=[(FilterStartTimeOrder.DEFAULT, 'Default'),
+                                            (FilterStartTimeOrder.DES, 'Descending'),
+                                            (FilterStartTimeOrder.ASC, 'Ascending')],
+                                   coerce=int)
+    capacity_order = SelectField('capacity order',
+                                 choices=[(FilterCapacityOrder.DEFAULT, 'Default'),
+                                          (FilterCapacityOrder.DES, 'Descending'),
+                                          (FilterCapacityOrder.ASC, 'Ascending')],
+                                 coerce=int)
+    confirm = SubmitField('Confirm')
