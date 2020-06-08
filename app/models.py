@@ -277,12 +277,16 @@ class Activity(db.Model):
             return ActivityStatus.FINISHED
 
     def _status2html(self):
-        status_dict = {
-            0x01: "<font color=\"green\">Reserved</font>",
-            0x02: "<font color=\"red\">Ongoing</font>",
-            0x04: "<font color=\"black\">Finished</font>"
-        }
-        return status_dict[self._get_status()]
+        if self._get_status() == ActivityStatus.RESERVED:
+            capacity_num = self.capacity
+            participant_num = Enrollment.query.filter_by(activity_id=self.id).count()
+            return "<font color=\"green\">Reserved(" + str(participant_num) + "/" + str(capacity_num) + ")</font>"
+        elif self._get_status() == ActivityStatus.ONGOING:
+            return "<font color=\"red\">Ongoing</font>"
+        elif self._get_status() == ActivityStatus.FINISHED:
+            return "<font color=\"black\">Finished</font>"
+        else:
+            raise ValueError("[Error]:activity status is error!")
 
     @staticmethod
     def generate_fake(count=100):
