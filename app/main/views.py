@@ -12,6 +12,23 @@ filter = {'status': FilterStatus.ALL,
           'start_time_order': FilterStartTimeOrder.DEFAULT,
           'capacity_order': FilterCapacityOrder.DEFAULT,
           'location': ''}
+filter_status_to_str = {
+    FilterStatus.ALL: "all",
+    FilterStatus.RESERVED: "reserved",
+    FilterStatus.ONGOING: "ongoing",
+    FilterStatus.FINISHED: "finished"
+}
+
+filter_time_order_to_str = {
+    FilterStartTimeOrder.DEFAULT: "defalut",
+    FilterStartTimeOrder.DES: "descending",
+    FilterStartTimeOrder.ASC: "ascending",
+}
+filter_capacity_order_to_str = {
+    FilterCapacityOrder.DEFAULT: "default",
+    FilterCapacityOrder.DES: "descending",
+    FilterCapacityOrder.ASC: "ascending"
+}
 
 
 @main.route('/', methods=['GET', 'POST'])
@@ -111,6 +128,17 @@ def index():
         page, per_page=current_app.config['FLASKY_ACTIVITIES_PER_PAGE'],
         error_out=False)
     activities = pagination.items
+    if filter['location'].__len__() == 0:
+        fliter_prompt = "now the fileter is {" + "status: " + filter_status_to_str[filter['status']] + \
+                        ", time order: " + filter_time_order_to_str[filter['start_time_order']] + \
+                        ", capacity order: " + filter_capacity_order_to_str[filter['capacity_order']] + \
+                        ", location: all}"
+    else:
+        fliter_prompt = "now the fileter is {" + "status: " + filter_status_to_str[filter['status']] + \
+                        ", time order: " + filter_time_order_to_str[filter['start_time_order']] + \
+                        ", capacity order: " + filter_capacity_order_to_str[filter['capacity_order']] + \
+                        ", location: " + filter['location'] + "}"
+    flash(fliter_prompt)
     return render_template('index.html', publish_form=publish_form, filter_form=filter_form, activities=activities,
                            show_followed=show_followed,
                            pagination=pagination)
