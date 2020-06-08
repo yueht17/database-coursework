@@ -20,7 +20,7 @@ filter_status_to_str = {
 }
 
 filter_time_order_to_str = {
-    FilterStartTimeOrder.DEFAULT: "defalut",
+    FilterStartTimeOrder.DEFAULT: "default",
     FilterStartTimeOrder.DES: "descending",
     FilterStartTimeOrder.ASC: "ascending",
 }
