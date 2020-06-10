@@ -72,6 +72,7 @@ class User(UserMixin, db.Model):
     last_seen = db.Column(db.DateTime(), default=datetime.utcnow)
     avatar_hash = db.Column(db.String(32))
     activities = db.relationship('Activity', backref='publisher', lazy='dynamic')
+    comments = db.relationship('Comment', backref='author', lazy='dynamic')
     followed = db.relationship('Follow',
                                foreign_keys=[Follow.follower_id],
                                backref=db.backref('follower', lazy='joined'),
@@ -267,6 +268,7 @@ class Activity(db.Model):
     capacity = db.Column(db.Integer)
     disabled = db.Column(db.Boolean, default=False)
     enrollments = db.relationship('Enrollment', backref='activity', lazy='dynamic')
+    comments = db.relationship('Comment', backref='activity', lazy='dynamic')
 
     def _get_status(self):
         if datetime.now().__lt__(self.begin_timestamp):
@@ -385,3 +387,14 @@ class Enrollment(db.Model):
                     enrollment = Enrollment(activity_id=activity.id, participant_id=participant.id)
                     db.session.add(enrollment)
                     break
+
+
+class Comment(db.Model):
+    __tablename__ = 'comments'
+    id = db.Column(db.Integer, primary_key=True)
+    body = db.Column(db.Text)
+    body_html = db.Column(db.Text)
+    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    disabled = db.Column(db.Boolean)
+    author_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    activity_id = db.Column(db.Integer, db.ForeignKey('activities.id'))
