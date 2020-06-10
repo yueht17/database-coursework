@@ -99,3 +99,8 @@ class FilterForm(FlaskForm):
                                           (FilterCapacityOrder.ASC, 'Ascending')],
                                  coerce=int)
     confirm = SubmitField('Confirm')
+
+
+class CommentForm(FlaskForm):
+    body = StringField('Enter your comment', validators=[Required()])
+    submit = SubmitField('Submit')
