@@ -75,6 +75,11 @@
                         Permalink
                     </span>
                 </a>
+                <a href="{{url_for('.activity',id=activity.id)}}">
+                    <span class="label label-default">
+                        {{activity.comments.count()}} Comments
+                    </span>
+                </a>
             </div>
         </div>
     </li>

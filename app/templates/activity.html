@@ -1,10 +1,19 @@
 {% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
 {% import "_macros.html" as macros %}
 
 {% block title %}Flasky - Activity{% endblock %}
 
 {% block page_content %}
 {% include '_activities.html' %}
+<h2 id="comments">Comments</h2>
+{% if current_user.can(Permission.COMMENT) %}
+<div class="comment-form">
+    {{ wtf.quick_form(form) }}
+</div>
+{% endif %}
+{% include '_comments.html' %}
+
 <div>
     <h2>Participants of this activity:</h2>
 </div>
@@ -28,7 +37,9 @@
     </tr>
     {% endfor %}
 </table>
+{% if pagination %}
 <div class="pagination">
     {{ macros.pagination_widget(pagination, endpoint, id=endpoint_id)}}
 </div>
+{% endif %}
 {% endblock %}
