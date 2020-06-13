@@ -20,7 +20,21 @@
         </li>
         {% endif %}
     </ul>
-    {{ wtf.quick_form(filter_form) }}
+    <style>
+    div.form-group {
+        float: left;
+    }
+    ul.activities {
+    margin: 10px 0px 0px 0px;
+    }
+    .btn {
+        margin-top: 25px;
+    }
+
+    </style>
+    <div class="filter-form">
+        {{ wtf.quick_form(filter_form) }}
+    </div>
     {%include '_activities.html'%}
 </div>
 {% if pagination%}
