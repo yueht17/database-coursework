@@ -287,13 +287,18 @@ def edit(id):
 def delete(id):
     activities = Activity.query.filter_by(id=id).all()
     enrollments = Enrollment.query.filter_by(activity_id=id).all()
-    # TODO
-    # delete commits
+    comments = Comment.query.filter_by(activity_id=id).all()
+
+    for enrollment in enrollments:
+        db.session.delete(enrollment)
+        db.session.commit()
+
     for activity in activities:
         db.session.delete(activity)
         db.session.commit()
-    for enrollment in enrollments:
-        db.session.delete(enrollment)
+
+    for comment in comments:
+        db.session.delete(comment)
         db.session.commit()
     flash("Activity delete succeed!")
     return redirect(url_for(".index"))
