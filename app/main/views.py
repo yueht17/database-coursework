@@ -2,9 +2,9 @@ from flask import render_template, redirect, url_for, abort, flash, request, cur
 from flask_login import login_required, current_user
 from . import main
 from .forms import EditProfileForm, EditProfileAdminForm, ActivityForm, FilterForm, FilterStatus, \
-    FilterStartTimeOrder, FilterCapacityOrder
+    FilterStartTimeOrder, FilterCapacityOrder, CommentForm
 from .. import db
-from ..models import Role, User, Permission, Activity, Enrollment, ActivityStatus
+from ..models import Role, User, Permission, Activity, Enrollment, ActivityStatus, Comment
 from ..decorators import admin_required, permission_required
 from datetime import datetime
 
@@ -208,17 +208,38 @@ def edit_profile_admin(id):
     return render_template('edit_profile.html', form=form, user=user)
 
 
-@main.route('/activity/<int:id>')
+@main.route('/activity/<int:id>', methods=['GET', 'POST'])
 def activity(id):
     activity_arg = Activity.query.get_or_404(id)
+    form = CommentForm()
+    if form.validate_on_submit():
+        enrollment_record = Enrollment.query.filter_by(activity_id=id).filter_by(
+            participant_id=current_user._get_current_object().id).all()
+        assert enrollment_record.__len__() <= 1
+        if enrollment_record.__len__() == 0:
+            flash("Comment failed! Because you have not pariticipated this activity!")
+            return redirect(url_for('.activity', id=id))
+        else:
+            if activity_arg.end_timestamp.__gt__(datetime.now()):
+                flash("Comment failed!Because this activity is not finished! Let the bullet fly for a while. ")
+                return redirect(url_for('.activity', id=id))
+
+        comment = Comment(body=form.body.data,
+                          activity=activity_arg,
+                          author=current_user._get_current_object())
+        db.session.add(comment)
+        flash('Your comment has been published.')
+        return redirect(url_for('.activity', id=activity_arg.id, page=1))
     page = request.args.get('page', 1, type=int)
     pagination = Enrollment.query.filter_by(activity_id=id).paginate(
         page, per_page=current_app.config['FLASKY_PARTICIPANTS_PER_PAGE'],
         error_out=False)
     participants = [{'user': item.participant_id, 'timestamp': item.timestamp}
                     for item in pagination.items]
+    comments = activity_arg.comments.order_by(Comment.timestamp.asc()).all()
     return render_template('activity.html', activities=[activity_arg], pagination=pagination,
-                           participants=participants, User=User, endpoint='.activity', endpoint_id=id)
+                           participants=participants, User=User, endpoint='.activity', endpoint_id=id,
+                           form=form, comments=comments)
 
 
 @main.route('/edit/<int:id>', methods=['GET', 'POST'])
