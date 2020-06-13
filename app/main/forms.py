@@ -80,7 +80,6 @@ class FilterCapacityOrder(FilterStartTimeOrder):
 
 
 class FilterForm(FlaskForm):
-    # TODO
     status = SelectField('status：', choices=[
         (FilterStatus.ALL, 'All'),
         (FilterStatus.RESERVED, 'Reserved'),

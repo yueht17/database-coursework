@@ -301,13 +301,14 @@ class Activity(db.Model):
         for i in range(count):
             publisher = User.query.offset(randint(0, user_count - 1)).first()
             while True:
-                begin_timestamp = datetime.now() + timedelta(days=randint(1, 100)) + timedelta(hours=randint(0, 24))
+                begin_timestamp = datetime.now() + timedelta(days=randint(-100, 100)) + timedelta(hours=randint(0, 24))
                 end_timestamp = begin_timestamp + timedelta(hours=randint(1, 10))
                 location = forgery_py.address.city(),
                 if begin_timestamp.__ge__(end_timestamp):
                     continue
-                elif begin_timestamp.__lt__(datetime.now()):
-                    continue
+                # 删除，用于构造Finsied的activity
+                # elif begin_timestamp.__lt__(datetime.now()):
+                #     continue
                 elif end_timestamp.__sub__(begin_timestamp).days >= 1:
                     continue
                 same_place_activities = Activity.query.filter_by(location=location).all()
@@ -350,7 +351,7 @@ class Enrollment(db.Model):
     @staticmethod
     def generate_fake(count=1000):
         from random import seed, randint
-
+        from datetime import timedelta
         seed()
         user_count = User.query.count()
         activity_count = Activity.query.count()
@@ -370,11 +371,12 @@ class Enrollment(db.Model):
             while True:
                 participant = User.query.offset(randint(0, user_count - 1)).first()
                 activity = Activity.query.offset(randint(0, activity_count - 1)).first()
-                if activity._get_status() == ActivityStatus.ONGOING:
-                    continue
-                elif activity._get_status() == ActivityStatus.FINISHED:
-                    continue
-                elif participant == activity.publisher:
+                # 删除，用于构造finished的activity
+                # if activity._get_status() == ActivityStatus.ONGOING:
+                #     continue
+                # elif activity._get_status() == ActivityStatus.FINISHED:
+                #     continue
+                if participant == activity.publisher:
                     continue
                 elif Enrollment.query.filter_by(activity_id=activity.id).count() >= activity.capacity:
                     continue
@@ -384,7 +386,8 @@ class Enrollment(db.Model):
                 elif is_time_conflict(participant=participant):
                     continue
                 else:
-                    enrollment = Enrollment(activity_id=activity.id, participant_id=participant.id)
+                    enrollment = Enrollment(activity_id=activity.id, participant_id=participant.id,
+                                            timestamp=activity.begin_timestamp + timedelta(hours=randint(-3, 0)))
                     db.session.add(enrollment)
                     break
 
