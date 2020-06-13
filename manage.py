@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import os
 from app import create_app, db
-from app.models import User, Role, Permission, Activity,Enrollment
+from app.models import User, Role, Permission, Activity, Enrollment, Comment
 from flask_script import Manager, Shell
 from flask_migrate import Migrate, MigrateCommand
 
@@ -31,7 +31,9 @@ def generate_fake():
     User.generate_fake()
     Activity.generate_fake()
     Enrollment.generate_fake()
+    Comment.generate_fake()
     print("[Info]:Generate fake info Done!")
+
 
 if __name__ == '__main__':
     manager.run()

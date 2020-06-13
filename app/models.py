@@ -401,3 +401,20 @@ class Comment(db.Model):
     disabled = db.Column(db.Boolean)
     author_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     activity_id = db.Column(db.Integer, db.ForeignKey('activities.id'))
+
+    @staticmethod
+    def generate_fake(count=None):
+        from random import seed, randint, choice
+        comment_list = ["很有收获", "终于明白该吃啥了", "外币外币", "外币巴布", "浪费时间，差评", "很无聊，浪费时间",
+                        "谢谢,又被饿到", "研讨不错，能算学分就好了"]
+        seed()
+        finished_activities = Activity.query.filter(Activity.end_timestamp < datetime.now()).all()
+        assert (finished_activities.__len__() != 0)
+        for finished_activity in finished_activities:
+            enrollment_records = Enrollment.query.filter_by(activity_id=finished_activity.id).all()
+            for enrollment_record in enrollment_records:
+                comment = Comment(body=choice(comment_list),
+                                  activity=enrollment_record.activity,
+                                  author=enrollment_record.paticipant)
+                db.session.add(comment)
+                db.session.commit()
