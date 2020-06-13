@@ -32,6 +32,7 @@ div.comment-form {
     margin: 16px 0px 16px 32px;
 }
 
+
 </style>
 <ul class="comments">
     {% for comment in comments %}
@@ -52,6 +53,16 @@ div.comment-form {
                 {{ comment.body }}
                 {% endif %}
             </div>
+            {% if moderate %}
+            <br>
+            {% if comment.disabled %}
+            <a class="btn btn-default btn-xs"
+               href="{{ url_for('.moderate_enable', id=comment.id, page=page) }}">Enable</a>
+            {% else %}
+            <a class="btn btn-danger btn-xs"
+               href="{{ url_for('.moderate_disable', id=comment.id, page=page) }}">Disable</a>
+            {% endif %}
+            {% endif %}
         </div>
     </li>
     {% endfor %}
