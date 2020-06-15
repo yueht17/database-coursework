@@ -7,6 +7,7 @@ from .. import db
 from ..models import Role, User, Permission, Activity, Enrollment, ActivityStatus, Comment
 from ..decorators import admin_required, permission_required
 from datetime import datetime
+from flask_sqlalchemy import get_debug_queries
 
 filter = {'status': FilterStatus.ALL,
           'start_time_order': FilterStartTimeOrder.DEFAULT,
@@ -29,6 +30,17 @@ filter_capacity_order_to_str = {
     FilterCapacityOrder.DES: "descending",
     FilterCapacityOrder.ASC: "ascending"
 }
+
+
+@main.after_app_request
+def after_request(response):
+    for query in get_debug_queries():
+        if query.duration >= current_app.config['FLASKY_SLOW_DB_QUERY_TIME']:
+            current_app.logger.warning(
+                'Slow query: %s\nParameters: %s\nDuration: %fs\nContext: %s\n'
+                % (query.statement, query.parameters, query.duration,
+                   query.context))
+    return response
 
 
 @main.route('/', methods=['GET', 'POST'])
