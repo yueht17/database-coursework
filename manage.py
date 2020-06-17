@@ -57,5 +57,13 @@ def generate_fake():
     print("[Info]:Generate fake info Done!")
 
 
+@manager.command
+def profile(length=25, profile_dir=None):
+    from werkzeug.contrib.profiler import ProfilerMiddleware
+    app.wsgi_app = ProfilerMiddleware(app.wsgi_app, restrictions=[length],
+                                      profile_dir=profile_dir)
+    app.run()
+
+
 if __name__ == '__main__':
     manager.run()
