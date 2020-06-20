@@ -311,7 +311,12 @@ class Activity(db.Model):
                 #     continue
                 elif end_timestamp.__sub__(begin_timestamp).days >= 1:
                     continue
-                same_place_activities = Activity.query.filter_by(location=location).all()
+
+                try:
+                    same_place_activities = Activity.query.filter_by(location=location).all()
+                except Exception:
+                    same_place_activities = Activity.query.filter_by(location=location[0]).all()
+
                 for same_place_activity in same_place_activities:
                     if not (same_place_activity.begin_timestamp.__gt__(end_timestamp)
                             or same_place_activity.end_timestamp.__lt__(begin_timestamp)):
@@ -330,15 +335,27 @@ class Activity(db.Model):
                 return "关于" + selected_canteen[0] + "的" + selected_dishes[0] + "," + selected_canteen[1] + "的" + \
                        selected_dishes[1] + "那个更适合做" + selected_meal[0] + "的线下研讨会。"
 
-            activity = Activity(publisher=publisher,
-                                begin_timestamp=begin_timestamp,
-                                end_timestamp=end_timestamp,
-                                location=location,
-                                name=generate_fake_name(),
-                                description="到底那个更合适呢？快来讨论呀~",
-                                capacity=randint(10, 100))
-            db.session.add(activity)
-            db.session.commit()
+            try:
+                activity = Activity(publisher=publisher,
+                                    begin_timestamp=begin_timestamp,
+                                    end_timestamp=end_timestamp,
+                                    location=location,
+                                    name=generate_fake_name(),
+                                    description="到底那个更合适呢？快来讨论呀~",
+                                    capacity=randint(10, 100))
+                db.session.add(activity)
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
+                activity = Activity(publisher=publisher,
+                                    begin_timestamp=begin_timestamp,
+                                    end_timestamp=end_timestamp,
+                                    location=location[0],
+                                    name=generate_fake_name(),
+                                    description="到底那个更合适呢？快来讨论呀~",
+                                    capacity=randint(10, 100))
+                db.session.add(activity)
+                db.session.commit()
 
 
 class Enrollment(db.Model):
