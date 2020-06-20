@@ -5,6 +5,7 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY')
+    assert SECRET_KEY is not None
     SQLALCHEMY_COMMIT_ON_TEARDOWN = True
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_RECORD_QUERIES = True
@@ -12,10 +13,13 @@ class Config:
     MAIL_PORT = 25
     MAIL_USE_TLS = False
     MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
+    assert MAIL_USERNAME is not None
     MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
+    assert MAIL_PASSWORD is not None
     FLASKY_MAIL_SUBJECT_PREFIX = 'WeSalon'
     FLASKY_MAIL_SENDER = 'yueht17@tom.com'
     FLASKY_ADMIN = os.environ.get('FLASKY_ADMIN')
+    assert FLASKY_ADMIN is not None
     FLASKY_ACTIVITIES_PER_PAGE = 5
     FLASKY_FOLLOWERS_PER_PAGE = 50
     FLASKY_PARTICIPANTS_PER_PAGE = 50
